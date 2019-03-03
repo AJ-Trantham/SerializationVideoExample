@@ -12,7 +12,7 @@ import java.io.RandomAccessFile;
  * @author ajtrantham
  *
  */
-public class SerializationExample {
+public class SerializationExampleC {
 	
 	// static variables
 	static RandomAccessFile raf; // the file we are writing to and reading from MUST BE STATIC
@@ -25,8 +25,24 @@ public class SerializationExample {
 	 * @return
 	 */
 	private static byte[] serialize(DummyNode node) {
-				
-		return null;
+		
+		byte[] stream = null;
+		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(baos);
+			oos.writeObject(node);
+			stream = baos.toByteArray();
+			
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		
+		return stream;
 	}
 	
 	/**
@@ -38,7 +54,10 @@ public class SerializationExample {
 	 */
 	private static DummyNode deserialize(byte[] b) throws ClassNotFoundException, IOException {
 
-		return null;
+		ByteArrayInputStream in = new ByteArrayInputStream(b);
+		ObjectInputStream is = new ObjectInputStream(in);
+		
+		return (DummyNode)is.readObject();
 	}
 	
 	/**
@@ -47,7 +66,17 @@ public class SerializationExample {
 	 */
 	public static void diskWrite(DummyNode node, int pos) {
 		
+		byte[] b = serialize(node);
 		
+		try {
+			raf.seek(pos);
+			raf.write(b);
+			
+			offset += maxNodeSize;
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -60,7 +89,20 @@ public class SerializationExample {
 	 */
 	public static DummyNode diskRead(int pos) {
 		
-		return null;
+		byte[] b = new byte[maxNodeSize];
+		DummyNode copyNode = null;
+		
+		try {
+			raf.seek(pos);
+			raf.read(b);
+			copyNode = deserialize(b);
+			
+		} catch (IOException | ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return copyNode;
 		
 	}
 	
@@ -90,11 +132,6 @@ public class SerializationExample {
 		//Read the nextSampleNode back from disk
 		DummyNode nextCopyNode = diskRead(nextSampleNode.getOffset());
 		System.out.println(nextCopyNode.toString()+ "\n");
-		
-		//Note for serializing structures ensure each node contatins the position of the next node in the structure.
-		// I have used this strategy for a BTree before and it will work for other structures as well. 
-		
 	}
 }
-
 
